@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UniRx;
@@ -12,8 +13,9 @@ public class StageAutoCreator : MonoBehaviour
     private const int StageDeltaY = 21;
 
     private const int CreateThreshold = 50;
+    private const int DestroyThreshold =20;
 
-    private List<AbstractStage> stages = new();
+    [SerializeField] private List<AbstractStage> stages = new();
 
     [SerializeField] private int currentStageIndex = 2;
     [SerializeField] private GameObject _target;
@@ -24,6 +26,10 @@ public class StageAutoCreator : MonoBehaviour
         this.UpdateAsObservable()
             .Where(_ => _target.transform.position.y < -StageDeltaY * currentStageIndex + CreateThreshold)
             .Subscribe(_ => CreateStage());
+
+        TimeSpan destroyTimespan = TimeSpan.FromSeconds(5);
+        Observable.Interval(destroyTimespan)
+            .Subscribe(_ => DestroyStages());
     }
 
     private void CreateStage()
@@ -47,5 +53,24 @@ public class StageAutoCreator : MonoBehaviour
                 Debug.Log("StageÇÃê∂ê¨Ç…é∏îsÇµÇ‹ÇµÇΩ");
             }
         };
+    }
+
+    private void DestroyStages()
+    {
+        List<AbstractStage> removeStages = new(); 
+
+        foreach (var stage in stages)
+        {
+            if (_target.transform.position.y < stage.transform.position.y - DestroyThreshold)
+            {
+                removeStages.Add(stage);
+            }
+        }
+
+        foreach (var stage in removeStages)
+        {
+            stages.Remove(stage);
+            stage.DestroyStage();
+        }
     }
 }
